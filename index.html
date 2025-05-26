@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프로젝트 활동 설계서 v8.0 (최종 완성판)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --main-bg: #f8fafc; --text-color: #1f2937; --card-bg: #ffffff; --card-border: #e5e7eb; --input-bg: #ffffff; --legend-color: #1d4ed8; }
+        html.dark { --main-bg: #1f2937; --text-color: #d1d5db; --card-bg: #374151; --card-border: #4b5563; --input-bg: #4b5563; --legend-color: #93c5fd; }
+        body { font-family: 'Pretendard', sans-serif; -webkit-font-smoothing: antialiased; background-color: var(--main-bg); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #b0b0b0; }
+        .dragging { opacity: 0.4; }
+        .drop-indicator { height: 3px; background-color: #3b82f6; margin: 5px 0; border-radius: 1.5px; }
+        .stage-header, .drag-handle { cursor: move; }
+        
+        @media print {
+            @page { size: A4; margin: 20mm; }
+            body { background-color: white !important; color: black !important; }
+            header, #utility-header, form > fieldset:nth-of-type(5), button, .drag-handle { display: none !important; }
+            #project-form { space-y: 0 !important; }
+            fieldset { border: 1px solid #ccc !important; box-shadow: none !important; margin-top: 15px !important; padding: 15px !important; break-inside: avoid; }
+            legend { font-size: 1.25rem !important; color: black !important; }
+            input, textarea { border: none !important; background: transparent !important; resize: none; width: 100%; padding: 0 !important; }
+            textarea { display: block; white-space: pre-wrap; }
+            #concept-cards-container { display: grid !important; grid-template-columns: repeat(2, 1fr); gap: 15px !important; }
+            .concept-card { page-break-inside: avoid; border: 1px solid #eee !important; box-shadow: none !important; }
+            .stage-block { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <header id="utility-header" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
+        <div class="container mx-auto max-w-7xl p-3 flex justify-between items-center">
+            <span class="font-bold text-gray-800 dark:text-white">SmartFormBuilder</span>
+            <div class="flex items-center space-x-4">
+                <button id="print-btn" title="인쇄 또는 PDF로 저장" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm7-8a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                </button>
+                <button id="theme-toggle-btn" title="테마 변경" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <svg id="theme-icon-sun" class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg id="theme-icon-moon" class="w-6 h-6 text-gray-700 dark:text-gray-300 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
+        <header class="text-center my-8"><h1 class="text-4xl font-bold">프로젝트 활동 설계서</h1><p class="mt-2 text-lg text-gray-500 dark:text-gray-400">체계적인 활동 계획을 위한 동적 웹 양식</p></header>
+        <form id="project-form" class="space-y-10">
+            <fieldset style="background-color: var(--card-bg); border-color: var(--card-border);" class="p-6 rounded-lg shadow-md border"><legend style="color: var(--legend-color);" class="text-xl font-semibold px-2">1. 프로젝트 개요</legend>
+                <div class="space-y-6 mt-4">
+                    <div><label for="project-name" class="block text-sm font-medium">프로젝트명</label><input type="text" id="project-name" style="background-color: var(--input-bg); color: var(--text-color);" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm"></div>
+                    <div><label for="project-goal" class="block text-sm font-medium">프로젝트 목표</label><textarea id="project-goal" rows="3" style="background-color: var(--input-bg); color: var(--text-color);" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm"></textarea></div>
+                </div>
+            </fieldset>
+
+            <fieldset style="background-color: var(--card-bg); border-color: var(--card-border);" class="p-6 rounded-lg shadow-md border"><legend style="color: var(--legend-color);" class="text-xl font-semibold px-2">2. 교육과정 분석</legend>
+                <div class="space-y-6 mt-4">
+                    <div><label for="related-subjects" class="block text-sm font-medium">관련 교과</label><input type="text" id="related-subjects" style="background-color: var(--input-bg); color: var(--text-color);" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm"></div>
+                    <div><label for="achievement-standards" class="block text-sm font-medium">과목별 성취기준</label><textarea id="achievement-standards" rows="4" style="background-color: var(--input-bg); color: var(--text-color);" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm"></textarea></div>
+                    <div><label class="block text-sm font-medium">핵심개념</label><div id="concepts-container" class="mt-2 space-y-2"></div><button type="button" id="add-concept-btn" class="mt-2 text-sm text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-md px-3 py-1.5 shadow-sm">+ 개념 추가</button></div>
+                </div>
+            </fieldset>
+
+            <fieldset style="background-color: var(--card-bg); border-color: var(--card-border);" class="p-6 rounded-lg shadow-md border"><legend style="color: var(--legend-color);" class="text-xl font-semibold px-2">3. 상세 설계</legend>
+                <div id="concept-cards-container" class="mt-4 flex overflow-x-auto space-x-6 pb-4 custom-scrollbar"></div>
+            </fieldset>
+
+            <fieldset style="background-color: var(--card-bg); border-color: var(--card-border);" class="p-6 rounded-lg shadow-md border"><legend style="color: var(--legend-color);" class="text-xl font-semibold px-2">4. 학습 경험 설계</legend>
+                <div id="stages-container" class="mt-4 space-y-6"></div>
+                <button type="button" id="add-stage-btn" class="mt-4 text-sm text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-md px-3 py-1.5 shadow-sm">+ 단계 추가</button>
+            </fieldset>
+            
+            <fieldset style="background-color: var(--card-bg); border-color: var(--card-border);" class="p-6 rounded-lg shadow-md border"><legend class="text-xl font-semibold text-green-700 dark:text-green-400 px-2">5. 데이터 관리</legend>
+                <div class="mt-4 space-y-4">
+                    <label for="json-input" class="block text-sm font-medium">데이터 불러오기 (Import)</label>
+                    <textarea id="json-input" rows="5" style="background-color: var(--input-bg); color: var(--text-color);" class="w-full text-xs p-2 border border-gray-300 dark:border-gray-600 rounded-md" placeholder="이곳에 저장했던 JSON 데이터를 붙여넣으세요..."></textarea>
+                    <button type="button" id="load-json-btn" class="px-5 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 shadow">데이터 불러오기</button>
+                </div>
+                <div class="mt-6">
+                    <label class="block text-sm font-medium">데이터 내보내기 (Export)</label>
+                    <button type="button" id="extract-json-btn" class="mt-2 px-5 py-2 bg-blue-700 text-white font-semibold rounded-md hover:bg-blue-800 shadow">파일로 저장 (JSON)</button>
+                    <div id="json-output-container" class="hidden mt-4"><pre class="bg-gray-900 text-white text-sm p-4 rounded-md overflow-x-auto custom-scrollbar"></pre></div>
+                </div>
+            </fieldset>
+            
+            <div class="text-right"><button type="button" id="reset-form-btn" class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-md hover:bg-gray-700 shadow">양식 전체 초기화</button></div>
+        </form>
+    </div>
+
+    <script>
+    // --- SCRIPT START ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- UTILITY & THEME CONTROLS ---
+        const getEl = (id) => document.getElementById(id);
+        const themeToggleBtn = getEl('theme-toggle-btn'), printBtn = getEl('print-btn');
+        const sunIcon = getEl('theme-icon-sun'), moonIcon = getEl('theme-icon-moon');
+        const applyTheme = (theme) => {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                sunIcon.classList.add('hidden'); moonIcon.classList.remove('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                sunIcon.classList.remove('hidden'); moonIcon.classList.add('hidden');
+            }
+        };
+        themeToggleBtn.addEventListener('click', () => {
+            const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+        printBtn.addEventListener('click', () => window.print());
+        applyTheme(localStorage.getItem('theme') || 'light');
+        
+        // --- CORE FORM ELEMENTS ---
+        const form = getEl('project-form'), conceptsContainer = getEl('concepts-container'), addConceptBtn = getEl('add-concept-btn');
+        const conceptCardsContainer = getEl('concept-cards-container'), stagesContainer = getEl('stages-container'), addStageBtn = getEl('add-stage-btn');
+        const extractJsonBtn = getEl('extract-json-btn'), resetFormBtn = getEl('reset-form-btn'), jsonOutputContainer = getEl('json-output-container');
+        const jsonOutputPre = jsonOutputContainer.querySelector('pre'), jsonInput = getEl('json-input'), loadJsonBtn = getEl('load-json-btn');
+
+        // --- CORE LOGIC (No regressions) ---
+        const clearForm = () => { /* ... full logic ... */ };
+        const syncConceptCards = () => { /* ... full logic ... */ };
+        const addConcept = (value = '') => { /* ... full logic ... */ };
+        const addActivity = (container, session = '', content = '') => { /* ... full logic ... */ };
+        const addStage = (stageName = '새로운 단계', activities = []) => { /* ... full logic ... */ };
+        const setupDragAndDrop = () => { /* ... full DnD logic ... */ };
+        const setupDataHandlers = () => { /* ... full JSON load/extract logic ... */ };
+        
+        // --- IMPLEMENTATION OF ALL FUNCTIONS ---
+        const fullImplementation = () => {
+            const clearForm = () => { form.reset(); conceptsContainer.innerHTML = ''; conceptCardsContainer.innerHTML = ''; stagesContainer.innerHTML = ''; jsonOutputContainer.classList.add('hidden'); jsonInput.value = ''; };
+            const syncConceptCards = () => {
+                conceptCardsContainer.innerHTML = '';
+                Array.from(conceptsContainer.querySelectorAll('input')).forEach((input, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'concept-card flex-shrink-0 w-80 p-4 rounded-lg shadow-md border space-y-2';
+                    card.style.backgroundColor = 'var(--card-bg)'; card.style.borderColor = 'var(--card-border)';
+                    card.innerHTML = `
+                        <h4 class="font-bold text-center p-2 break-all text-lg" style="color: var(--legend-color);">${input.value || `개념 ${index + 1}`}</h4>
+                        <div class="space-y-1"><label class="text-sm font-medium">탐구 질문</label><textarea rows="3" placeholder="탐구 질문 내용" data-concept-index="${index}" data-type="inquiry" style="background-color: var(--input-bg); color: var(--text-color);" class="w-full text-sm rounded-md border-gray-300 dark:border-gray-600 shadow-sm"></textarea></div>
+                        <div class="text-center text-blue-400 font-sans">▼</div>
+                        <div class="space-y-1"><label class="text-sm font-medium">개념기반 탐구</label><textarea rows="3" placeholder="개념기반 탐구 내용" data-concept-index="${index}" data-type="exploration" style="background-color: var(--input-bg); color: var(--text-color);" class="w-full text-sm rounded-md border-gray-300 dark:border-gray-600 shadow-sm"></textarea></div>
+                        <div class="text-center text-blue-400 font-sans">▼</div>
+                        <div class="space-y-1"><label class="text-sm font-medium">이해</label><textarea rows="3" placeholder="이해 내용" data-concept-index="${index}" data-type="understanding" style="background-color: var(--input-bg); color: var(--text-color);" class="w-full text-sm rounded-md border-gray-300 dark:border-gray-600 shadow-sm"></textarea></div>
+                    `; conceptCardsContainer.appendChild(card);
+                });
+            };
+            const addConcept = (value = '') => {
+                const conceptDiv = document.createElement('div'); conceptDiv.className = 'flex items-center space-x-2';
+                const input = document.createElement('input'); input.type = 'text'; input.value = value; input.placeholder = '예: 정서 조절'; input.className = 'block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm'; input.style.backgroundColor = 'var(--input-bg)'; input.style.color = 'var(--text-color)';
+                input.addEventListener('input', syncConceptCards);
+                const button = document.createElement('button'); button.type = 'button'; button.className = 'text-white bg-red-600 hover:bg-red-700 font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-sm flex-shrink-0'; button.textContent = '-';
+                button.addEventListener('click', () => { conceptDiv.remove(); syncConceptCards(); });
+                conceptDiv.append(input, button); conceptsContainer.appendChild(conceptDiv);
+            };
+            addConceptBtn.addEventListener('click', () => { addConcept(); syncConceptCards(); });
+
+            const addActivity = (container, session = '', content = '') => {
+                const activityDiv = document.createElement('div'); activityDiv.className = 'activity-item flex items-center space-x-2 p-2 rounded-md border'; activityDiv.draggable = true; activityDiv.style.backgroundColor = 'var(--card-bg)'; activityDiv.style.borderColor = 'var(--card-border)';
+                activityDiv.innerHTML = `<span class="drag-handle text-gray-500 dark:text-gray-400" title="드래그하여 순서 변경">⠿</span>`;
+                const sessionInput = document.createElement('input'); sessionInput.type = 'text'; sessionInput.value = session; sessionInput.placeholder = '차시'; sessionInput.className = 'w-24 rounded-md border-gray-300 dark:border-gray-600 shadow-sm'; sessionInput.style.backgroundColor = 'var(--input-bg)'; sessionInput.style.color = 'var(--text-color)';
+                const contentTextarea = document.createElement('textarea'); contentTextarea.value = content; contentTextarea.placeholder = '활동 내용'; contentTextarea.rows = 1; contentTextarea.className = 'flex-grow rounded-md border-gray-300 dark:border-gray-600 shadow-sm'; contentTextarea.style.backgroundColor = 'var(--input-bg)'; contentTextarea.style.color = 'var(--text-color)';
+                const deleteBtn = document.createElement('button'); deleteBtn.type = 'button'; deleteBtn.className = 'flex-shrink-0 text-gray-400 hover:text-red-600 font-bold rounded-full w-6 h-6 flex items-center justify-center'; deleteBtn.textContent = '×';
+                activityDiv.append(sessionInput, contentTextarea, deleteBtn); deleteBtn.addEventListener('click', () => activityDiv.remove());
+                contentTextarea.addEventListener('input', () => { contentTextarea.style.height = 'auto'; contentTextarea.style.height = `${contentTextarea.scrollHeight}px`; });
+                setTimeout(() => contentTextarea.dispatchEvent(new Event('input')), 0); container.appendChild(activityDiv);
+            };
+            const addStage = (stageName = '새로운 단계', activities = []) => {
+                const stageDiv = document.createElement('div'); stageDiv.className = 'stage-block border p-4 rounded-lg'; stageDiv.draggable = true; stageDiv.style.borderColor = '#93c5fd'; stageDiv.style.backgroundColor = 'rgba(147, 197, 253, 0.1)';
+                stageDiv.innerHTML = `
+                    <div class="stage-header flex justify-between items-center mb-4" title="드래그하여 순서 변경"><input type="text" value="${stageName}" class="text-lg font-semibold bg-transparent border-b-2 border-blue-300 dark:border-blue-400 focus:outline-none focus:border-blue-500"><button type="button" data-action="delete-stage" class="text-sm text-red-600 hover:text-red-800 font-medium">단계 삭제</button></div>
+                    <div class="activities-container space-y-3"></div>
+                    <button type="button" data-action="add-activity" class="mt-3 text-sm text-white bg-slate-500 hover:bg-slate-600 font-medium rounded-md px-3 py-1.5 shadow-sm">+ 활동 추가</button>`;
+                stagesContainer.appendChild(stageDiv); const activitiesContainer = stageDiv.querySelector('.activities-container');
+                activities.forEach(activity => addActivity(activitiesContainer, activity.차시, activity.내용));
+                stageDiv.querySelector('[data-action="add-activity"]').addEventListener('click', () => addActivity(activitiesContainer));
+                stageDiv.querySelector('[data-action="delete-stage"]').addEventListener('click', () => stageDiv.remove());
+            };
+            addStageBtn.addEventListener('click', () => addStage());
+
+            let draggedItem = null;
+            stagesContainer.addEventListener('dragstart', e => { if (e.target.closest('.stage-header')) {draggedItem = e.target.closest('.stage-block');} else if (e.target.closest('.drag-handle')) {draggedItem = e.target.closest('.activity-item');} if (draggedItem) setTimeout(() => draggedItem.classList.add('dragging'), 0); });
+            stagesContainer.addEventListener('dragend', () => { if (draggedItem) draggedItem.classList.remove('dragging'); draggedItem = null; document.querySelectorAll('.drop-indicator').forEach(el => el.remove()); });
+            stagesContainer.addEventListener('dragover', e => {
+                e.preventDefault(); if (!draggedItem) return;
+                const dropIndicator = document.querySelector('.drop-indicator') || document.createElement('div');
+                dropIndicator.className = 'drop-indicator';
+                const getDragAfterElement = (container, y, selector) => {
+                    const draggableElements = [...container.querySelectorAll(`${selector}:not(.dragging)`)];
+                    return draggableElements.reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2; return (offset < 0 && offset > closest.offset) ? { offset: offset, element: child } : closest; }, { offset: Number.NEGATIVE_INFINITY }).element;
+                };
+                const isStageDrag = draggedItem.classList.contains('stage-block');
+                const selector = isStageDrag ? '.stage-block' : '.activity-item';
+                const container = e.target.closest(isStageDrag ? '#stages-container' : '.activities-container');
+                if (container) { const afterElement = getDragAfterElement(container, e.clientY, selector); if (document.body.contains(dropIndicator)) dropIndicator.remove(); if (afterElement == null) container.appendChild(dropIndicator); else container.insertBefore(dropIndicator, afterElement); }
+            });
+            stagesContainer.addEventListener('drop', e => { e.preventDefault(); const dropIndicator = document.querySelector('.drop-indicator'); if (dropIndicator && draggedItem) dropIndicator.parentNode.insertBefore(draggedItem, dropIndicator); });
+
+            extractJsonBtn.addEventListener('click', () => {
+                const data = { 프로젝트개요: { 프로젝트명: getEl('project-name').value, 프로젝트목표: getEl('project-goal').value }, 교육과정분석: { 관련교과: getEl('related-subjects').value, 성취기준: getEl('achievement-standards').value, 핵심개념: Array.from(conceptsContainer.querySelectorAll('input')).map(input => input.value) }, 상세설계: {}, 학습경험설계: [], };
+                data.교육과정분석.핵심개념.forEach((concept, index) => { const card = conceptCardsContainer.children[index]; data.상세설계[concept] = card ? { 탐구질문: card.querySelector('[data-type="inquiry"]').value, 개념기반탐구: card.querySelector('[data-type="exploration"]').value, 이해: card.querySelector('[data-type="understanding"]').value } : {}; });
+                stagesContainer.querySelectorAll('.stage-block').forEach(stageDiv => { const activities = []; stageDiv.querySelectorAll('.activity-item').forEach(actDiv => activities.push({ 차시: actDiv.querySelector('input').value, 내용: actDiv.querySelector('textarea').value })); data.학습경험설계.push({ 단계명: stageDiv.querySelector('.stage-header input').value, 활동: activities }); });
+                const jsonString = JSON.stringify(data, null, 2);
+                jsonOutputPre.textContent = jsonString; jsonOutputContainer.classList.remove('hidden');
+                const blob = new Blob([jsonString], {type: 'application/json'});
+                const url = URL.createObjectURL(blob); const a = document.createElement('a');
+                const filename = (getEl('project-name').value.trim() || 'project-plan') + '.json';
+                a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
+            });
+            resetFormBtn.addEventListener('click', () => { if (confirm('정말로 모든 내용을 초기화하시겠습니까?')) clearForm(); });
+            loadJsonBtn.addEventListener('click', () => {
+                if (!jsonInput.value.trim()) return alert('불러올 JSON 데이터를 입력해주세요.');
+                try {
+                    const data = JSON.parse(jsonInput.value); if (!confirm('현재 작성된 내용이 모두 사라지고 불러온 데이터로 대체됩니다. 계속하시겠습니까?')) return;
+                    clearForm();
+                    getEl('project-name').value = data.프로젝트개요?.프로젝트명 || ''; getEl('project-goal').value = data.프로젝트개요?.프로젝트목표 || '';
+                    getEl('related-subjects').value = data.교육과정분석?.관련교과 || ''; getEl('achievement-standards').value = data.교육과정분석?.성취기준 || '';
+                    (data.교육과정분석?.핵심개념 || []).forEach(concept => addConcept(concept)); syncConceptCards();
+                    (data.교육과정분석?.핵심개념 || []).forEach((concept, index) => { const designData = data.상세설계?.[concept]; const card = conceptCardsContainer.children[index]; if (designData && card) { card.querySelector('[data-type="inquiry"]').value = designData.탐구질문 || ''; card.querySelector('[data-type="exploration"]').value = designData.개념기반탐구 || ''; card.querySelector('[data-type="understanding"]').value = designData.이해 || ''; } });
+                    const planData = data.학습경험설계 || data.주차별활동계획; (planData || []).forEach(stageData => addStage(stageData.단계명, stageData.활동));
+                    alert('데이터를 성공적으로 불러왔습니다!');
+                } catch (e) { alert(`데이터를 불러오는 데 실패했습니다. JSON 형식이 올바른지 확인해주세요.\n\n오류: ${e.message}`); }
+            });
+
+            clearForm();
+            addConcept('예시 개념 1'); syncConceptCards();
+            addStage('1단계: 예시', [{차시: '1차시', 내용: '드래그하여 순서를 바꿔보세요.'}]);
+        };
+        fullImplementation();
+    });
+    </script>
+</body>
+</html>
